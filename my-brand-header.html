@@ -1,0 +1,298 @@
+<!-- Widget: Global Header Buttons -->
+<div class="nb-widget-brand-header">
+    <div id="nb-total-patients" class="nb-widget-total-patients" data-target="55000000"
+         role="button" tabindex="0">
+        総患者数：5,500万人（推定）
+    </div>
+    <div class="nb-widget-header-actions">
+<a href="/ai-chat"
+   class="nb-ai-chat-link nb-ai-bloom"
+   aria-label="AI チャット">
+    <img src="/assets/ai-chat-btn.png" alt="AI チャット">
+</a>
+        <!-- Button 2: Donate -->
+        <button id="nb-donate-btn" class="btn btn-link" type="button" title="寄付のお願い">
+            <img src="/assets/uploads/files/donate-btn.png" alt="donate">
+        </button>
+    </div>
+</div>
+
+<!-- Donate Modal -->
+<div id="nb-donate-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">🧡 寄付受付中です　</h4>
+                <button class="close" type="button" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"
+                    style="background:none; border:none; cursor:pointer; opacity:0.6; padding:4px; line-height:1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Choose your payment method:</p>
+                <a id="nb-stripe-link" href="https://buy.stripe.com/6oU00jb4pbPwcv25El4Rq01"
+                    class="btn btn-block btn-primary" target="_blank" rel="noopener noreferrer"
+                    style="background:#635bff; border-color:#635bff; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px;">
+                    <svg class="nb-stripe-logo" width="360" height="151" viewBox="0 0 360 151" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M360 78.0002C360 52.4002 347.6 32.2002 323.9 32.2002C300.1 32.2002 285.7 52.4002 285.7 77.8002C285.7 107.9 302.7 123.1 327.1 123.1C339 123.1 348 120.4 354.8 116.6V96.6002C348 100 340.2 102.1 330.3 102.1C320.6 102.1 312 98.7002 310.9 86.9002H359.8C359.8 85.6002 360 80.4002 360 78.0002ZM310.6 68.5002C310.6 57.2002 317.5 52.5002 323.8 52.5002C329.9 52.5002 336.4 57.2002 336.4 68.5002H310.6Z"
+                            fill="white" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M247.1 32.2002C237.3 32.2002 231 36.8002 227.5 40.0002L226.2 33.8002H204.2V150.4L229.2 145.1L229.3 116.8C232.9 119.4 238.2 123.1 247 123.1C264.9 123.1 281.2 108.7 281.2 77.0002C281.1 48.0002 264.6 32.2002 247.1 32.2002ZM241.1 101.1C235.2 101.1 231.7 99.0002 229.3 96.4002L229.2 59.3002C231.8 56.4002 235.4 54.4002 241.1 54.4002C250.2 54.4002 256.5 64.6002 256.5 77.7002C256.5 91.1002 250.3 101.1 241.1 101.1Z"
+                            fill="white" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M169.8 26.3001L194.9 20.9001V0.600098L169.8 5.9001V26.3001Z" fill="white" />
+                        <path d="M194.9 33.9001H169.8V121.4H194.9V33.9001Z" fill="white" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M142.9 41.3001L141.3 33.9001H119.7V121.4H144.7V62.1001C150.6 54.4001 160.6 55.8001 163.7 56.9001V33.9001C160.5 32.7001 148.8 30.5001 142.9 41.3001Z"
+                            fill="white" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M92.8999 12.2002L68.4999 17.4002L68.3999 97.5002C68.3999 112.3 79.4999 123.2 94.2999 123.2C102.5 123.2 108.5 121.7 111.8 119.9V99.6002C108.6 100.9 92.7999 105.5 92.7999 90.7002V55.2002H111.8V33.9002H92.7999L92.8999 12.2002Z"
+                            fill="white" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M25.3 59.3002C25.3 55.4002 28.5 53.9002 33.8 53.9002C41.4 53.9002 51 56.2002 58.6 60.3002V36.8002C50.3 33.5002 42.1 32.2002 33.8 32.2002C13.5 32.2002 0 42.8002 0 60.5002C0 88.1002 38 83.7002 38 95.6002C38 100.2 34 101.7 28.4 101.7C20.1 101.7 9.5 98.3002 1.1 93.7002V117.5C10.4 121.5 19.8 123.2 28.4 123.2C49.2 123.2 63.5 112.9 63.5 95.0002C63.4 65.2002 25.3 70.5002 25.3 59.3002Z"
+                            fill="white" />
+                    </svg>
+                </a>
+                <p style="margin-top:10px; font-size:12px; color:#888;">
+                    🔒 Secured by <strong>Stripe</strong> — card, Apple Pay &amp; Google Pay accepted
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     About Modal  –  triggered by clicking #nb-total-patients
+     ============================================================ -->
+<div id="nb-about-modal" class="modal fade" tabindex="-1" aria-labelledby="nb-about-modal-title">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable nb-about-dialog">
+    <div class="modal-content nb-about-content">
+
+      <!-- Header -->
+      <div class="modal-header nb-about-header">
+        <div class="nb-about-header-inner">
+          <span class="nb-about-tag">About This Site</span>
+          <h2 class="modal-title nb-about-title" id="nb-about-modal-title">
+            認知症コミュニティサイトについて
+          </h2>
+          <p class="nb-about-subtitle">AIで運用する認知症に関するコミュニティサイト</p>
+        </div>
+        <button class="nb-about-close" type="button" aria-label="Close" data-dismiss="modal" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body nb-about-body">
+
+        <!-- Image 1: Site overview diagram -->
+        <figure class="nb-about-figure">
+          <div class="nb-about-img-wrap">
+            <img
+              src="/assets/uploads/files/dementia-site.png"
+              alt="AIで運用する認知症に関するコミュニティサイトの概要図"
+              class="nb-about-img"
+              loading="lazy"
+            />
+          </div>
+          <figcaption class="nb-about-caption">
+            <span class="nb-about-caption-num">01</span>
+            <div>
+              <strong>サイト概要</strong>
+              <span>ユーザーが情報を投稿・質問し、AIがサポートするコミュニティの仕組み</span>
+            </div>
+          </figcaption>
+        </figure>
+
+        <div class="nb-about-divider">
+          <span>データで見る認知症の現状</span>
+        </div>
+
+        <!-- Image 2: Trend chart -->
+        <figure class="nb-about-figure">
+          <div class="nb-about-img-wrap nb-about-img-wrap--chart">
+            <img
+              src="/assets/uploads/files/dementia-trend.png"
+              alt="認知症患者数のトレンドグラフ（世界と日本、2015〜2050年）"
+              class="nb-about-img"
+              loading="lazy"
+            />
+          </div>
+          <figcaption class="nb-about-caption">
+            <span class="nb-about-caption-num">02</span>
+            <div>
+              <strong>認知症患者数の推移（2015–2050年）</strong>
+              <span>世界では2050年までに約1億4,000万人、日本でも約1,000万人に達すると予測されています</span>
+            </div>
+          </figcaption>
+        </figure>
+
+        <!-- Footer note -->
+        <p class="nb-about-note">
+          このサイトは認知症の方・ご家族・介護者・医療従事者など、すべての方を対象とした
+          情報共有とAIサポートのコミュニティです。みんなで支え合い、AIと一緒に、より良い未来へ。
+        </p>
+
+      </div><!-- /.modal-body -->
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /#nb-about-modal -->
+
+<script>
+    /*
+     * Dialogs (donate + about) for the brand header.
+     *
+     * Guarded so it initialises only once per page session, and all opening /
+     * closing is done via delegated document listeners. This means the handlers
+     * never stack if NodeBB re-renders the header widget on ajaxify navigation,
+     * and the modals still open even when the buttons are replaced by a re-render.
+     */
+    (function initBrandHeaderDialogs() {
+        if (window.__nbBrandHeaderInit) {
+            return;
+        }
+        window.__nbBrandHeaderInit = true;
+
+        var $ = window.jQuery;
+
+        function showModal(modalSelector) {
+            var modalElement = document.querySelector(modalSelector);
+
+            if (!modalElement) {
+                return;
+            }
+
+            if (window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                return;
+            }
+
+            if ($ && $.fn && $.fn.modal) {
+                $(modalElement).modal('show');
+                return;
+            }
+
+            modalElement.style.display = 'block';
+            modalElement.removeAttribute('aria-hidden');
+            modalElement.setAttribute('aria-modal', 'true');
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+        }
+
+        function hideModal(modalElement) {
+            if (!modalElement) {
+                return;
+            }
+
+            if (window.bootstrap && window.bootstrap.Modal) {
+                var bootstrapModal = window.bootstrap.Modal.getInstance(modalElement);
+                if (bootstrapModal) {
+                    bootstrapModal.hide();
+                }
+            } else if ($ && $.fn && $.fn.modal) {
+                $(modalElement).modal('hide');
+            }
+
+            // Fallback cleanup. This also fixes cases where the Bootstrap/jQuery
+            // modal API exists but does not fully clean up inside a widget block.
+            setTimeout(function () {
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                modalElement.setAttribute('aria-hidden', 'true');
+                modalElement.removeAttribute('aria-modal');
+
+                document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+                    backdrop.remove();
+                });
+
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                    document.body.style.removeProperty('overflow');
+                }
+            }, 150);
+        }
+
+        // Tooltip on the donate button. Safe to re-run; we attach it once on
+        // load and again after each ajaxify render in case the button is new.
+        function initDonateTooltip() {
+            var donateBtn = document.querySelector('#nb-donate-btn');
+            if (donateBtn && $ && $.fn && $.fn.tooltip) {
+                $(donateBtn).tooltip({ placement: 'bottom', trigger: 'hover' });
+            }
+        }
+        initDonateTooltip();
+        if ($) {
+            $(window).on('action:ajaxify.end', initDonateTooltip);
+        }
+
+        // Single delegated click handler: opens donate / about, handles Stripe,
+        // and handles all close affordances.
+        document.addEventListener('click', function (e) {
+            // Open donate
+            var donateBtn = e.target.closest('#nb-donate-btn');
+            if (donateBtn) {
+                if ($ && $.fn && $.fn.tooltip) {
+                    $(donateBtn).tooltip('hide');
+                }
+                showModal('#nb-donate-modal');
+                return;
+            }
+
+            // Open about
+            if (e.target.closest('#nb-total-patients')) {
+                showModal('#nb-about-modal');
+                return;
+            }
+
+            // Stripe link: let it open, then close the modal afterwards
+            if (e.target.closest('#nb-stripe-link')) {
+                setTimeout(function () {
+                    hideModal(document.querySelector('#nb-donate-modal'));
+                }, 0);
+                return;
+            }
+
+            // Close buttons
+            var closeButton = e.target.closest('[data-dismiss="modal"], [data-bs-dismiss="modal"]');
+            if (closeButton) {
+                e.preventDefault();
+                hideModal(closeButton.closest('.modal'));
+                return;
+            }
+
+            // Click on backdrop area
+            if (e.target.classList && e.target.classList.contains('modal')) {
+                hideModal(e.target);
+            }
+        });
+
+        // Keyboard activation for the about trigger (Enter / Space).
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') {
+                return;
+            }
+            var trigger = e.target.closest && e.target.closest('#nb-total-patients');
+            if (trigger) {
+                e.preventDefault();
+                showModal('#nb-about-modal');
+            }
+        });
+    })();
+</script>
+
+<!--
+    Note: the body.ai-chat-active toggle (which calms the AI button on the
+    chat page) now lives in your global custom JS file, not here. Keeping it
+    in one place avoids two competing checks fighting over the body class.
+-->
