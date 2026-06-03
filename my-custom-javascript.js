@@ -78,3 +78,18 @@
     jQuery(window).on('action:ajaxify.end', updateAiButtonState);
   }
 })();
+
+/* tooltip mod for brand logo */
+$(window).on('action:ajaxify.end', function () {
+    // Target the brand anchor component
+    const brandAnchor = $('[component="brand/anchor"]');
+
+    if (brandAnchor.length) {
+        // Change the default title to "Home" on hover, and restore it when leaving
+        brandAnchor.on('mouseenter', function() {
+            $(this).attr('title', 'Home');
+        }).on('mouseleave', function() {
+            $(this).attr('title', 'Brand Logo');
+        });
+    }
+});

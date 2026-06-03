@@ -1,4 +1,9 @@
 <div id="nb-ai-chat-app" class="nb-ai-chat-app">
+  <div class="ai-agent-banner">
+    <div id="typewriter-msg1" class="ai-agent-page-top-msg" data-text="🕵️ AI Agent を選択すると、このサイトの投稿内容から回答を生成します。"></div>
+    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　（ 只今、医療専用生成AIのAPIを準備中、暫くお待ちください ）"></div>
+  </div>
+
   <div id="nb-ai-chat-log" class="nb-ai-chat-log"></div>
 
   <form id="nb-ai-chat-form" class="nb-ai-chat-form">
@@ -10,38 +15,35 @@
     <div class="nb-ai-form-footer">
       <span id="nb-ai-char-count" class="nb-ai-char-count">0 / 2000</span>
 
-      <!-- Info icon -->
       <button type="button" class="nb-ai-info-btn" id="nb-ai-info-btn" title="使い方">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
       </button>
 
-      <!-- Info tooltip/popover -->
       <div class="nb-ai-info-popover" id="nb-ai-info-popover" hidden>
         <strong>使い方 / How to use</strong>
         <ul>
+          <li>🕵️ AI Agent が投稿を分析して回答</li>
           <li>キー操作＜Ctrl + Enter＞で送信 </li>
           <li>入力文字、最大 2,000 文字😞</li>
-          <li>AI モデル、好みで選択してちょ</li>
-          <li>ローカル言語モデル、現在準備中</li>
+          <li>AI モデル、好みで選択できます</li>
           <li>応答内容、最大 1,000 トークン</li>
-          <li>フリーモデル、応答に時間が ・・・</li>
-          <li>十分な寄付 ➡ AI 応答🔝</li>
+          <li>フリーモデル、応答に時間が・・・</li>
+          <li>十分な寄付で、AI 応答速度🔝</li>
         </ul>
       </div>
 
-      <!-- Model selector (inline) -->
       <span class="nb-ai-model-label">Model:</span>
       <div class="nb-ai-model-select-wrap">
         <select id="nb-ai-model-select" class="nb-ai-model-select">
-            <option value="local-llm">🖥️ Local-LLM</option>
+            <option value="agent">🕵️ AI Agent</option>
             <option value="h">🔴 OpenRouter (free)</option>
-            <option value="e">🧠 DeepSeek (free)</option>
             <option value="g">🟢 Nvidia (free)</option>
-            <option value="d">✨ Gemini (free)</option>
+            <option value="d">✨ Gemma (free)</option>
             <option value="c">🦙 Meta (free)</option>
             <option value="f">🟣 Qwen (free)</option>
+            <option value="e">🧠 DeepSeek</option>
             <option value="b">🟠 Claude</option>
             <option value="a">🔘 GPT</option>
         </select>
@@ -67,9 +69,48 @@
   }
 
   /**
+   * Sequential Multi-line Typewriter Engine
+   */
+  function runTypewriterEffect() {
+    const el1 = document.getElementById('typewriter-msg1');
+    const el2 = document.getElementById('typewriter-msg2');
+    
+    if (!el1 || !el2 || el1.dataset.typingStarted === '1') return;
+    el1.dataset.typingStarted = '1';
+
+    const text1 = el1.dataset.text || '';
+    const text2 = el2.dataset.text || '';
+    
+    el1.textContent = '';
+    el2.textContent = '';
+    
+    let index1 = 0;
+    let index2 = 0;
+    const speed = 45; // Typing speed per character (ms)
+
+    function typeLine1() {
+      if (index1 < text1.length) {
+        el1.textContent += text1.charAt(index1);
+        index1++;
+        setTimeout(typeLine1, speed);
+      } else {
+        setTimeout(typeLine2, 200); // Small natural pause before line 2 starts
+      }
+    }
+
+    function typeLine2() {
+      if (index2 < text2.length) {
+        el2.textContent += text2.charAt(index2);
+        index2++;
+        setTimeout(typeLine2, speed);
+      }
+    }
+
+    typeLine1();
+  }
+
+  /**
    * Minimal Markdown renderer for AI replies.
-   * Supports: ### ## # headings, **bold**, *italic*, `code`,
-   *           - bullet lines, * bullet lines, blank line spacing.
    */
   function renderReply(text) {
     const lines = text.split('\n');
@@ -85,7 +126,6 @@
       if (!tableLines.length) return;
       html += '<table class="nb-ai-table">';
       tableLines.forEach(function (row, idx) {
-        // skip separator rows like |---|---|
         if (/^\|[-| :]+\|$/.test(row.trim())) return;
         const cells = row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
         const tag = idx === 0 ? 'th' : 'td';
@@ -97,7 +137,6 @@
       tableLines = [];
     }
 
-    // Apply inline markdown: **bold**, *italic*, `code`
     function inline(str) {
       return escapeHtml(str)
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -109,7 +148,6 @@
       const line = lines[i];
       const trimmed = line.trim();
 
-      // Table row
       if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
         closeLists();
         tableLines.push(trimmed);
@@ -118,7 +156,6 @@
         flushTable();
       }
 
-      // Headings: ###, ##, #
       const hMatch = trimmed.match(/^(#{1,3})\s+(.+)/);
       if (hMatch) {
         closeLists();
@@ -127,7 +164,6 @@
         continue;
       }
 
-      // Bullet lines: "- " or "* "
       const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
       if (bulletMatch) {
         if (!inUl) { html += '<ul class="nb-ai-bullets">'; inUl = true; }
@@ -135,13 +171,11 @@
         continue;
       }
 
-      // Empty line
       if (!trimmed) {
         closeLists();
         continue;
       }
 
-      // Regular paragraph
       closeLists();
       html += '<p>' + inline(trimmed) + '</p>';
     }
@@ -156,7 +190,6 @@
   }
 
   function getUsername() {
-    // NodeBB exposes window.app.user or window.config; fall back gracefully
     if (window.app && window.app.user && window.app.user.username) {
       return window.app.user.username;
     }
@@ -176,18 +209,6 @@
     return 0;
   }
 
-  /**
-   * Returns true when the current NodeBB user is an administrator.
-   * Checks window.app.user.isAdmin (or window.config.user equivalent).
-   */
-  function isPaidSubscriber() {
-    var user = (window.app && window.app.user) || (window.config && window.config.user) || {};
-    return !!user.isAdmin;
-  }
-
-  /** Models that require a paid subscription (by <option> value). */
-  var PAID_MODELS = { 'b': true, 'a': true }; // 'b' = Claude, 'a' = GPT
-
   function initAiChatPage() {
     const app  = document.querySelector('#nb-ai-chat-app');
     const form = document.querySelector('#nb-ai-chat-form');
@@ -198,64 +219,38 @@
     }
 
     app.dataset.initialized = '1';
+    runTypewriterEffect();
 
     const textarea  = form.querySelector('.nb-ai-input');
     const button    = form.querySelector('.nb-ai-send-btn');
     const charCount = document.querySelector('#nb-ai-char-count');
     const infoBtn   = document.querySelector('#nb-ai-info-btn');
     const infoPop   = document.querySelector('#nb-ai-info-popover');
-    const pillsEl   = document.querySelector('#nb-ai-model-pills');
 
-    // --- Model selection state (default: local-llm) ---
     const modelSelect = document.querySelector('#nb-ai-model-select');
-    let selectedModel = modelSelect ? modelSelect.value : 'local-llm';
+    let selectedModel = modelSelect ? modelSelect.value : 'agent';
 
     if (modelSelect) {
       modelSelect.addEventListener('change', function () {
-        var chosen = modelSelect.value;
-
-        // Guard: paid-only models require a paid subscription
-        if (PAID_MODELS[chosen] && !isPaidSubscriber()) {
-          var modelName = chosen === 'b' ? 'Claude' : 'GPT';
-          // Revert selection to local-llm
-          modelSelect.value = 'local-llm';
-          selectedModel = 'local-llm';
-
-          // Show a notice bubble in the chat log
-          var noticeBubble = document.createElement('div');
-          noticeBubble.className = 'nb-ai-message nb-ai-message-bot';
-          noticeBubble.innerHTML =
-            '<div class="nb-ai-reply nb-ai-reply-error">'
-            + '🔒 <strong>' + modelName + '</strong> は有料会員専用です。'
-            + '<br><em>' + modelName + ' is available for paid subscribers only.</em>'
-            + '<br>モデルを <strong>Local-LLM</strong> に戻しました。'
-            + '</div>';
-          log.appendChild(noticeBubble);
-          scrollToBottom(log);
-          return;
-        }
-
-        selectedModel = chosen;
+        selectedModel = modelSelect.value;
       });
     }
 
-    // --- Info popover toggle ---
     infoBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       infoPop.hidden = !infoPop.hidden;
     });
+    
     document.addEventListener('click', function () {
       if (infoPop) infoPop.hidden = true;
     });
 
-    // --- character counter ---
     textarea.addEventListener('input', function () {
       const len = textarea.value.length;
       charCount.textContent = len + ' / 2000';
       charCount.classList.toggle('nb-ai-char-over', len > 2000);
     });
 
-    // --- Cmd/Ctrl + Enter to submit ---
     textarea.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -263,12 +258,9 @@
       }
     });
 
-    // --- submit ---
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-
       const message = textarea.value.trim();
-
       if (!message) return;
 
       if (message.length > 2000) {
@@ -280,7 +272,6 @@
       button.disabled = true;
       button.querySelector('.nb-ai-send-text').textContent = 'Sending...';
 
-      // User bubble — width adapts to short messages
       const userBubble = document.createElement('div');
       userBubble.className = 'nb-ai-message nb-ai-message-user';
       const isShort = message.length < 60;
@@ -289,7 +280,6 @@
         + escapeHtml(message) + '</div>';
       log.appendChild(userBubble);
 
-      // Loading bubble
       const botBubble = document.createElement('div');
       botBubble.className = 'nb-ai-message nb-ai-message-bot';
       botBubble.innerHTML =
@@ -298,7 +288,6 @@
 
       scrollToBottom(log);
 
-      // Clear input
       textarea.value = '';
       charCount.textContent = '0 / 2000';
 
@@ -318,13 +307,35 @@
         });
 
         if (!response.ok) {
-          throw new Error('Server error: ' + response.status);
+            let errText = 'Server error: ' + response.status;
+            try {
+                const errData = await response.json();
+                if (errData.error) errText = errData.error;
+            } catch (e) {}
+            throw new Error(errText);
         }
-
+        
         const data = await response.json();
         const replyText = data.reply || 'AI chat backend is not ready yet.';
+        const sources = Array.isArray(data.sources) ? data.sources : [];
 
-        botBubble.innerHTML = '<div class="nb-ai-reply">' + renderReply(replyText) + '</div>';
+        let replyHtml = '<div class="nb-ai-reply">' + renderReply(replyText);
+
+        if (sources.length > 0) {
+          replyHtml += '<div class="nb-ai-sources">';
+          replyHtml += '<span class="nb-ai-sources-label">📌 参考トピック:</span>';
+          replyHtml += '<ul class="nb-ai-sources-list">';
+          sources.forEach(function (src) {
+            var title = escapeHtml(src.title || '(no title)');
+            var url = src.url || ('/topic/' + src.tid);
+            replyHtml += '<li><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="nb-ai-source-link">'
+              + title + ' ↗</a></li>';
+          });
+          replyHtml += '</ul></div>';
+        }
+
+        replyHtml += '</div>';
+        botBubble.innerHTML = replyHtml;
 
       } catch (err) {
         botBubble.innerHTML = '<div class="nb-ai-reply nb-ai-reply-error">送信に失敗しました: ' + escapeHtml(err.message) + '</div>';
