@@ -1,7 +1,7 @@
 <div id="nb-ai-chat-app" class="nb-ai-chat-app">
   <div class="ai-agent-banner">
     <div id="typewriter-msg1" class="ai-agent-page-top-msg" data-text="🕵️ AI Agent を選択すると、このサイトの投稿内容から回答を生成します。"></div>
-    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　（ 只今、医療専用生成AIのAPIを準備中、暫くお待ちください ）"></div>
+    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　• 連続質問（ 直近5往復分を記憶 ）、医療専用 API 準備中・・・"></div>
   </div>
 
   <div id="nb-ai-chat-log" class="nb-ai-chat-log"></div>
@@ -31,6 +31,7 @@
           <li>応答内容、最大 1,000 トークン</li>
           <li>フリーモデル、応答に時間が・・・</li>
           <li>十分な寄付で、AI 応答速度🔝</li>
+          <li>🔄 前回の会話を復元 / 🗑️ クリア</li>
         </ul>
       </div>
 
@@ -49,6 +50,18 @@
         </select>
         <span class="nb-ai-model-arrow">▾</span>
       </div>
+
+      <button type="button" class="nb-ai-history-btn nb-ai-restore-btn" id="nb-ai-restore-btn" title="前回の会話を復元">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+      </button>
+
+      <button type="button" class="nb-ai-history-btn nb-ai-clear-btn" id="nb-ai-clear-btn" title="会話をクリア">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
 
       <button type="submit" class="nb-ai-send-btn">
         <span class="nb-ai-send-text">Send</span>
@@ -227,12 +240,98 @@
     const infoBtn   = document.querySelector('#nb-ai-info-btn');
     const infoPop   = document.querySelector('#nb-ai-info-popover');
 
+    const STORAGE_KEY  = 'nb-ai-chat-history';
+    const MODEL_KEY    = 'nb-ai-model-selection';
+    const MESSAGES_KEY = 'nb-ai-chat-messages';
+
+    // Conversation history for multi-turn API calls
+    var chatMessages = [];
+
+    function saveChatLog() {
+      const bubbles = log.querySelectorAll('.nb-ai-message');
+      const entries = [];
+      bubbles.forEach(function (el) {
+        const isUser = el.classList.contains('nb-ai-message-user');
+        const reply  = el.querySelector('.nb-ai-reply');
+        if (!reply || reply.classList.contains('nb-ai-reply-loading')) return;
+        entries.push({
+          role: isUser ? 'user' : 'bot',
+          html: reply.outerHTML
+        });
+      });
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch (e) {}
+      try { localStorage.setItem(MESSAGES_KEY, JSON.stringify(chatMessages)); } catch (e) {}
+    }
+
+    function restoreChatLog() {
+      let entries;
+      try { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+      if (!entries || !entries.length) return false;
+
+      log.innerHTML = '';
+      entries.forEach(function (entry) {
+        const bubble = document.createElement('div');
+        bubble.className = 'nb-ai-message ' + (entry.role === 'user' ? 'nb-ai-message-user' : 'nb-ai-message-bot');
+        bubble.innerHTML = entry.html;
+        log.appendChild(bubble);
+      });
+
+      // Restore conversation messages for multi-turn API calls
+      try {
+        var saved = JSON.parse(localStorage.getItem(MESSAGES_KEY));
+        if (Array.isArray(saved)) chatMessages = saved;
+      } catch (e) {}
+
+      scrollToBottom(log);
+      return true;
+    }
+
+    function clearChatLog() {
+      log.innerHTML = '';
+      chatMessages = [];
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { localStorage.removeItem(MESSAGES_KEY); } catch (e) {}
+      try { localStorage.removeItem(MODEL_KEY); } catch (e) {}
+      if (modelSelect) { modelSelect.value = 'agent'; selectedModel = 'agent'; }
+    }
+
+    // Wire up restore / clear buttons
+    const restoreBtn = document.querySelector('#nb-ai-restore-btn');
+    const clearBtn   = document.querySelector('#nb-ai-clear-btn');
+
+    restoreBtn.addEventListener('click', function () {
+      if (!restoreChatLog()) {
+        // No history found — show a brief notice
+        const notice = document.createElement('div');
+        notice.className = 'nb-ai-message nb-ai-message-bot';
+        notice.innerHTML = '<div class="nb-ai-reply" style="color:#888;font-size:13px;">復元できる会話がありません。</div>';
+        log.appendChild(notice);
+        setTimeout(function () { if (notice.parentNode) notice.remove(); }, 2500);
+      }
+    });
+
+    clearBtn.addEventListener('click', function () {
+      if (log.children.length === 0) return;
+      clearChatLog();
+    });
+
     const modelSelect = document.querySelector('#nb-ai-model-select');
+
+    // Restore previously selected model
+    try {
+      const savedModel = localStorage.getItem(MODEL_KEY);
+      if (savedModel && modelSelect) {
+        const opt = modelSelect.querySelector('option[value="' + savedModel + '"]');
+        if (opt) modelSelect.value = savedModel;
+      }
+    } catch (e) {}
+
     let selectedModel = modelSelect ? modelSelect.value : 'agent';
 
     if (modelSelect) {
       modelSelect.addEventListener('change', function () {
         selectedModel = modelSelect.value;
+        try { localStorage.setItem(MODEL_KEY, selectedModel); } catch (e) {}
       });
     }
 
@@ -291,6 +390,9 @@
       textarea.value = '';
       charCount.textContent = '0 / 2000';
 
+      // Add to conversation history
+      chatMessages.push({ role: 'user', content: message });
+
       try {
         const response = await fetch('/api/ai-chat/message', {
           method: 'POST',
@@ -300,6 +402,7 @@
           },
           body: JSON.stringify({
             message: message,
+            messages: chatMessages,
             model: selectedModel,
             username: getUsername(),
             uid: getUserId()
@@ -319,6 +422,9 @@
         const replyText = data.reply || 'AI chat backend is not ready yet.';
         const sources = Array.isArray(data.sources) ? data.sources : [];
 
+        // Add assistant reply to conversation history
+        chatMessages.push({ role: 'assistant', content: replyText });
+
         let replyHtml = '<div class="nb-ai-reply">' + renderReply(replyText);
 
         if (sources.length > 0) {
@@ -336,9 +442,13 @@
 
         replyHtml += '</div>';
         botBubble.innerHTML = replyHtml;
+        saveChatLog();
 
       } catch (err) {
         botBubble.innerHTML = '<div class="nb-ai-reply nb-ai-reply-error">送信に失敗しました: ' + escapeHtml(err.message) + '</div>';
+        // Remove the failed user message from conversation history
+        chatMessages.pop();
+        saveChatLog();
       } finally {
         button.disabled = false;
         button.querySelector('.nb-ai-send-text').textContent = 'Send';
