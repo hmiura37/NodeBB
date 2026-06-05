@@ -1,7 +1,7 @@
 <div id="nb-ai-chat-app" class="nb-ai-chat-app">
   <div class="ai-agent-banner">
     <div id="typewriter-msg1" class="ai-agent-page-top-msg" data-text="🕵️ AI Agent を選択すると、このサイトの投稿内容から回答を生成します。"></div>
-    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　• 連続質問（ 直近5往復分を記憶 ）、医療専用 API 準備中・・・"></div>
+    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　• 連続質問（ 直近5往復分を記憶 ）、💡Qwen 3.6 は ヘルス分野ランク #48"></div>
   </div>
 
   <div id="nb-ai-chat-log" class="nb-ai-chat-log"></div>
@@ -28,10 +28,9 @@
           <li>キー操作＜Ctrl + Enter＞で送信 </li>
           <li>入力文字、最大 2,000 文字😞</li>
           <li>AI モデル、好みで選択できます</li>
-          <li>応答内容、最大 1,000 トークン</li>
-          <li>フリーモデル、応答に時間が・・・</li>
-          <li>十分な寄付で、AI 応答速度🔝</li>
-          <li>🔄 前回の会話を復元 / 🗑️ クリア</li>
+          <li>応答内容、最大 800 トークン</li>
+          <li>🔄前回の会話を復元、🗑️クリア</li>
+          <li>𝕏 認知症フィードを別タブで表示</li>
         </ul>
       </div>
 
@@ -43,8 +42,8 @@
             <option value="g">🟢 Nvidia (free)</option>
             <option value="d">✨ Gemma (free)</option>
             <option value="c">🦙 Meta (free)</option>
-            <option value="f">🟣 Qwen (free)</option>
             <option value="e">🧠 DeepSeek</option>
+            <option value="f">🟣 Qwen 3.6</option>
             <option value="b">🟠 Claude</option>
             <option value="a">🔘 GPT</option>
         </select>
@@ -60,6 +59,12 @@
       <button type="button" class="nb-ai-history-btn nb-ai-clear-btn" id="nb-ai-clear-btn" title="会話をクリア">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+
+      <button type="button" class="nb-ai-history-btn nb-ai-x-btn" id="nb-ai-x-btn" title="𝕏 認知症フィード">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
         </svg>
       </button>
 
@@ -314,6 +319,14 @@
       if (log.children.length === 0) return;
       clearChatLog();
     });
+
+    // X/Twitter feed — open search in new tab
+    const xBtn = document.querySelector('#nb-ai-x-btn');
+    if (xBtn) {
+      xBtn.addEventListener('click', function () {
+        window.open('https://x.com/search?q=認知症&src=typed_query&f=live', '_blank', 'noopener');
+      });
+    }
 
     const modelSelect = document.querySelector('#nb-ai-model-select');
 

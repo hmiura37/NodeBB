@@ -387,6 +387,48 @@ body.ai-chat-active .nb-ai-bloom img {
 
 .nb-ai-model-arrow { position: absolute; right: 10px; pointer-events: none; font-size: 11px; color: #999; line-height: 1; }
 
+/* Chat History Restore / Clear Buttons */
+.nb-ai-history-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  background: #f7f7f7;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.nb-ai-restore-btn:hover {
+  border-color: #3a7cff;
+  background: #eef2ff;
+  color: #3a7cff;
+  box-shadow: 0 0 8px rgba(58,124,255,0.2);
+  transform: scale(1.1);
+}
+
+.nb-ai-clear-btn:hover {
+  border-color: #e74c3c;
+  background: #fef2f2;
+  color: #e74c3c;
+  box-shadow: 0 0 8px rgba(231,76,60,0.2);
+  transform: scale(1.1);
+}
+
+.nb-ai-x-btn:hover {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(0,0,0,0.25);
+  transform: scale(1.1);
+}
+
+.nb-ai-history-btn:active { transform: scale(0.92); }
+
 /* Info Controls & Elements */
 .nb-ai-info-btn { background: none; border: none; padding: 2px 4px; cursor: pointer; color: #aaa; line-height: 1; transition: color 0.15s, transform 0.15s; position: relative; }
 .nb-ai-info-btn:hover { color: #3a7cff; transform: scale(1.2); }
@@ -527,6 +569,11 @@ body.ai-chat-active .nb-ai-bloom img {
   .nb-ai-info-popover {
     min-width: 220px;
     font-size: 12px;
+  }
+
+  .nb-ai-history-btn {
+    width: 26px;
+    height: 26px;
   }
 
   /* Core Top Banner Responsiveness Updates */
