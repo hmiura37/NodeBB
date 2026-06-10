@@ -1,0 +1,194 @@
+[component="brand/logo"] {
+  height: 70px;
+  width: auto;
+}
+
+[component="siteTitle"] h1 {
+  font-size: 1.3rem !important;
+  font-weight: 700;
+}
+
+[component="siteTitle"]::after {
+  content: "奇妙な夢を語ろう、AI がその意味を探る";
+  display: block;
+  font-size: 0.9rem;
+  font-weight: normal;
+  color: #666666;
+  margin-top: 6px;
+  margin-left: 12px;
+}
+
+/* --- my brand header --- */
+/* Right-aligned container */
+.yume-about-wrap {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
+/* The button itself */
+.yume-about-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+  border-radius: 50%;
+}
+.yume-about-btn img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: block;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* Grow on hover / keyboard focus */
+.yume-about-btn:hover img,
+.yume-about-btn:focus-visible img {
+  transform: scale(1.35);
+  box-shadow: 0 0 18px rgba(180, 160, 120, 0.6);
+}
+.yume-about-btn:focus-visible {
+  outline: 2px solid rgba(180, 160, 120, 0.8);
+  outline-offset: 3px;
+}
+
+/* Dialog */
+.yume-about-dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  background: #1d1a17;
+  color: #e8e2d6;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+}
+.yume-about-dialog::backdrop {
+  background: rgba(8, 6, 12, 0.7);
+  backdrop-filter: blur(2px);
+}
+.yume-about-inner {
+  padding: 2rem 1.75rem 1.5rem;
+  text-align: center;
+}
+.yume-about-portrait {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 24px rgba(180, 160, 120, 0.35);
+}
+.yume-about-dialog h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+  letter-spacing: 0.08em;
+  color: #d9c9a3;
+}
+.yume-about-dialog p {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  margin: 0 0 1.5rem;
+  text-align: left;
+}
+.yume-about-close {
+  background: #d9c9a3;
+  color: #1d1a17;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 2rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.yume-about-close:hover {
+  background: #efe3c4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yume-about-btn img,
+  .yume-about-close {
+    transition: none;
+  }
+}
+
+/* --- Footer Styling Starts Here --- */
+.site-footer {
+  flex-shrink: 0;
+  background-color: #ffffff; /* Clean white background, change to #1e1e24 for dark theme */
+  border-top: 1px solid #e9ecef; /* Subtle top border line */
+  padding: 20px 0;
+  margin-top: 40px; /* Space between content and footer */
+  width: 100%;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+  text-align: center; /* Centers the text alignment */
+}
+
+.footer-text {
+  font-size: 0.875rem; /* 14px equivalent for standard readability */
+  color: #6c757d; /* Soft muted gray for secondary information */
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Links inside the footer */
+.footer-text a {
+  color: #4a5568; /* Balanced dark gray-blue link color */
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+}
+
+.footer-text a:hover {
+  color: #2b6cb0; /* Highlight color on hover (NodeBB brand blue vibe) */
+  text-decoration: underline;
+}
+
+/* Specific elements styling */
+.footer-text strong {
+  color: #2d3748; /* Darker tone for the site name to make it stand out */
+}
+
+.ai-agents {
+  color: #6b46c1; /* Modern purple accent for "AI agents" */
+  font-weight: 600;
+}
+
+/* RSS Link specific styling */
+.rss-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px; /* Space between icon and text */
+  color: #e66100 !important; /* Standard RSS Orange */
+}
+
+.rss-link:hover {
+  color: #b34a00 !important;
+  text-decoration: none !important;
+}
+
+.rss-link .fa-rss {
+  font-size: 0.9rem;
+}
+
+.company-name {
+  font-weight: 500;
+  color: #4a5568;
+}
+
+/* Responsive adjustements */
+@media (max-width: 576px) {
+  .footer-text {
+    font-size: 0.8rem;
+    padding: 0 10px;
+  }
+}
