@@ -1,12 +1,40 @@
-/* Target the logo on hover */
+/* Target the logo on hover.
+   NOTE: `content: url()` on a real element works in Chrome/Safari/Edge but
+   NOT in Firefox (Firefox only supports `content` on ::before/::after).
+   Firefox users simply keep the normal logo — harmless degradation.
+   A Firefox-compatible alternative is included (commented) below. */
 [component="brand/logo"]:hover {
     /* Replace the URL below with the link to your "home" image */
     content: url('/assets/uploads/system/home2.png');
-    
+
     /* Keeps your existing dimensions intact */
     max-height: 48px;
     width: auto;
 }
+
+/* Preload the hover image so there is no flash/blank on first hover. */
+body::after {
+    content: url('/assets/uploads/system/home2.png');
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* OPTIONAL Firefox-compatible logo swap. Works in all browsers, but
+   verify the sizing matches your theme's header before enabling, then
+   remove the `content: url()` rule above.
+[component="brand/anchor"] { position: relative; display: inline-flex; }
+[component="brand/anchor"]:hover [component="brand/logo"] { visibility: hidden; }
+[component="brand/anchor"]:hover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/assets/uploads/system/home2.png') no-repeat left center / contain;
+}
+*/
 
 /* Widget: Global Header Buttons */
 .nb-widget-brand-header {

@@ -1,7 +1,7 @@
 <div id="nb-ai-chat-app" class="nb-ai-chat-app">
   <div class="ai-agent-banner">
     <div id="typewriter-msg1" class="ai-agent-page-top-msg" data-text="🕵️ AI Agent を選択すると、このサイトの投稿内容から回答を生成します。"></div>
-    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　• 連続質問（ 直近5往復分を記憶 ）、💡Qwen 3.6 は ヘルス分野ランク #48"></div>
+    <div id="typewriter-msg2" class="ai-agent-page-top-msg2" data-text="　　• 連続質問（ 直近5往復分まで記憶 ）、💡Qwen 3.6 は ヘルス分野ランク #48"></div>
   </div>
 
   <div id="nb-ai-chat-log" class="nb-ai-chat-log"></div>
@@ -10,6 +10,7 @@
     <textarea
       class="nb-ai-input"
       rows="3"
+      maxlength="2000"
       placeholder="AI に質問？（ 送信：⌘ + ↵  ）"
     ></textarea>
     <div class="nb-ai-form-footer">
@@ -83,7 +84,8 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -207,26 +209,6 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  function getUsername() {
-    if (window.app && window.app.user && window.app.user.username) {
-      return window.app.user.username;
-    }
-    if (window.config && window.config.user && window.config.user.username) {
-      return window.config.user.username;
-    }
-    return 'anonymous';
-  }
-
-  function getUserId() {
-    if (window.app && window.app.user && window.app.user.uid) {
-      return window.app.user.uid;
-    }
-    if (window.config && window.config.user && window.config.user.uid) {
-      return window.config.user.uid;
-    }
-    return 0;
-  }
-
   function initAiChatPage() {
     const app  = document.querySelector('#nb-ai-chat-app');
     const form = document.querySelector('#nb-ai-chat-form');
@@ -245,41 +227,88 @@
     const infoBtn   = document.querySelector('#nb-ai-info-btn');
     const infoPop   = document.querySelector('#nb-ai-info-popover');
 
-    const STORAGE_KEY  = 'nb-ai-chat-history';
+    // v2 keys: history is now stored as PLAIN TEXT and re-rendered on
+    // restore, never as raw HTML injected back into the DOM. This prevents
+    // localStorage from becoming a persistent XSS vector.
+    const STORAGE_KEY  = 'nb-ai-chat-history-v2';
     const MODEL_KEY    = 'nb-ai-model-selection';
     const MESSAGES_KEY = 'nb-ai-chat-messages';
 
     // Conversation history for multi-turn API calls
     var chatMessages = [];
+    // Display history: [{ role: 'user'|'bot', text: '...', sources: [...] }]
+    var displayEntries = [];
+
+    // Model select — declared BEFORE any function that references it.
+    const modelSelect = document.querySelector('#nb-ai-model-select');
+
+    try {
+      const savedModel = localStorage.getItem(MODEL_KEY);
+      if (savedModel && modelSelect) {
+        const opt = modelSelect.querySelector('option[value="' + savedModel + '"]');
+        if (opt) modelSelect.value = savedModel;
+      }
+    } catch (e) {}
+
+    let selectedModel = modelSelect ? modelSelect.value : 'agent';
+
+    if (modelSelect) {
+      modelSelect.addEventListener('change', function () {
+        selectedModel = modelSelect.value;
+        try { localStorage.setItem(MODEL_KEY, selectedModel); } catch (e) {}
+      });
+    }
+
+    function renderSourcesHtml(sources) {
+      if (!Array.isArray(sources) || sources.length === 0) return '';
+      let html = '<div class="nb-ai-sources">';
+      html += '<span class="nb-ai-sources-label">📌 参考トピック:</span>';
+      html += '<ul class="nb-ai-sources-list">';
+      sources.forEach(function (src) {
+        var title = escapeHtml(src.title || '(no title)');
+        var url = src.url || ('/topic/' + src.tid);
+        html += '<li><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="nb-ai-source-link">'
+          + title + ' ↗</a></li>';
+      });
+      html += '</ul></div>';
+      return html;
+    }
+
+    function buildUserBubbleHtml(text) {
+      const isShort = text.length < 60;
+      return '<div class="nb-ai-reply nb-ai-reply-user' + (isShort ? ' nb-ai-reply-compact' : '') + '">'
+        + escapeHtml(text) + '</div>';
+    }
+
+    function buildBotBubbleHtml(text, sources) {
+      return '<div class="nb-ai-reply">' + renderReply(text) + renderSourcesHtml(sources) + '</div>';
+    }
+
+    function appendEntryBubble(entry) {
+      const bubble = document.createElement('div');
+      bubble.className = 'nb-ai-message ' + (entry.role === 'user' ? 'nb-ai-message-user' : 'nb-ai-message-bot');
+      bubble.innerHTML = entry.role === 'user'
+        ? buildUserBubbleHtml(entry.text || '')
+        : buildBotBubbleHtml(entry.text || '', entry.sources);
+      log.appendChild(bubble);
+      return bubble;
+    }
 
     function saveChatLog() {
-      const bubbles = log.querySelectorAll('.nb-ai-message');
-      const entries = [];
-      bubbles.forEach(function (el) {
-        const isUser = el.classList.contains('nb-ai-message-user');
-        const reply  = el.querySelector('.nb-ai-reply');
-        if (!reply || reply.classList.contains('nb-ai-reply-loading')) return;
-        entries.push({
-          role: isUser ? 'user' : 'bot',
-          html: reply.outerHTML
-        });
-      });
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch (e) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(displayEntries)); } catch (e) {}
       try { localStorage.setItem(MESSAGES_KEY, JSON.stringify(chatMessages)); } catch (e) {}
     }
 
     function restoreChatLog() {
       let entries;
       try { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
-      if (!entries || !entries.length) return false;
+      if (!Array.isArray(entries) || !entries.length) return false;
 
       log.innerHTML = '';
-      entries.forEach(function (entry) {
-        const bubble = document.createElement('div');
-        bubble.className = 'nb-ai-message ' + (entry.role === 'user' ? 'nb-ai-message-user' : 'nb-ai-message-bot');
-        bubble.innerHTML = entry.html;
-        log.appendChild(bubble);
+      displayEntries = entries.filter(function (entry) {
+        return entry && typeof entry.text === 'string';
       });
+      displayEntries.forEach(appendEntryBubble);
 
       // Restore conversation messages for multi-turn API calls
       try {
@@ -294,10 +323,11 @@
     function clearChatLog() {
       log.innerHTML = '';
       chatMessages = [];
+      displayEntries = [];
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
       try { localStorage.removeItem(MESSAGES_KEY); } catch (e) {}
-      try { localStorage.removeItem(MODEL_KEY); } catch (e) {}
-      if (modelSelect) { modelSelect.value = 'agent'; selectedModel = 'agent'; }
+      // Intentionally KEEP the model selection (MODEL_KEY): clearing the
+      // conversation should not reset the user's preferred model.
     }
 
     // Wire up restore / clear buttons
@@ -325,26 +355,6 @@
     if (xBtn) {
       xBtn.addEventListener('click', function () {
         window.open('https://x.com/search?q=認知症&src=typed_query&f=live', '_blank', 'noopener');
-      });
-    }
-
-    const modelSelect = document.querySelector('#nb-ai-model-select');
-
-    // Restore previously selected model
-    try {
-      const savedModel = localStorage.getItem(MODEL_KEY);
-      if (savedModel && modelSelect) {
-        const opt = modelSelect.querySelector('option[value="' + savedModel + '"]');
-        if (opt) modelSelect.value = savedModel;
-      }
-    } catch (e) {}
-
-    let selectedModel = modelSelect ? modelSelect.value : 'agent';
-
-    if (modelSelect) {
-      modelSelect.addEventListener('change', function () {
-        selectedModel = modelSelect.value;
-        try { localStorage.setItem(MODEL_KEY, selectedModel); } catch (e) {}
       });
     }
 
@@ -386,10 +396,7 @@
 
       const userBubble = document.createElement('div');
       userBubble.className = 'nb-ai-message nb-ai-message-user';
-      const isShort = message.length < 60;
-      userBubble.innerHTML =
-        '<div class="nb-ai-reply nb-ai-reply-user' + (isShort ? ' nb-ai-reply-compact' : '') + '">'
-        + escapeHtml(message) + '</div>';
+      userBubble.innerHTML = buildUserBubbleHtml(message);
       log.appendChild(userBubble);
 
       const botBubble = document.createElement('div');
@@ -402,6 +409,7 @@
 
       textarea.value = '';
       charCount.textContent = '0 / 2000';
+      charCount.classList.remove('nb-ai-char-over');
 
       // Add to conversation history
       chatMessages.push({ role: 'user', content: message });
@@ -413,12 +421,12 @@
             'Content-Type': 'application/json',
             'x-csrf-token': window.config && window.config.csrf_token ? window.config.csrf_token : ''
           },
+          // username/uid are no longer sent: the server resolves identity
+          // from the authenticated session and ignores client claims.
           body: JSON.stringify({
             message: message,
             messages: chatMessages,
-            model: selectedModel,
-            username: getUsername(),
-            uid: getUserId()
+            model: selectedModel
           })
         });
 
@@ -430,7 +438,7 @@
             } catch (e) {}
             throw new Error(errText);
         }
-        
+
         const data = await response.json();
         const replyText = data.reply || 'AI chat backend is not ready yet.';
         const sources = Array.isArray(data.sources) ? data.sources : [];
@@ -438,23 +446,11 @@
         // Add assistant reply to conversation history
         chatMessages.push({ role: 'assistant', content: replyText });
 
-        let replyHtml = '<div class="nb-ai-reply">' + renderReply(replyText);
+        botBubble.innerHTML = buildBotBubbleHtml(replyText, sources);
 
-        if (sources.length > 0) {
-          replyHtml += '<div class="nb-ai-sources">';
-          replyHtml += '<span class="nb-ai-sources-label">📌 参考トピック:</span>';
-          replyHtml += '<ul class="nb-ai-sources-list">';
-          sources.forEach(function (src) {
-            var title = escapeHtml(src.title || '(no title)');
-            var url = src.url || ('/topic/' + src.tid);
-            replyHtml += '<li><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="nb-ai-source-link">'
-              + title + ' ↗</a></li>';
-          });
-          replyHtml += '</ul></div>';
-        }
-
-        replyHtml += '</div>';
-        botBubble.innerHTML = replyHtml;
+        // Record plain-text entries for persistence (re-rendered on restore)
+        displayEntries.push({ role: 'user', text: message });
+        displayEntries.push({ role: 'bot', text: replyText, sources: sources });
         saveChatLog();
 
       } catch (err) {

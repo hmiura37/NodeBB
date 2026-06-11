@@ -38,12 +38,9 @@
   setTimeout(addGoogleSearchIcon, 1000);
 
   // NodeBB fires action:ajaxify.end as a jQuery event on window, so native
-  // window.addEventListener will NOT catch it — bind via jQuery instead.
+  // window.addEventListener will NOT catch it — bind via jQuery.
   if (window.jQuery) {
     jQuery(window).on('action:ajaxify.end', rebindSearchIcon);
-  } else {
-    // Fallback only; unlikely to fire for NodeBB's jQuery-triggered events.
-    window.addEventListener('action:ajaxify.end', rebindSearchIcon);
   }
 })();
 
@@ -80,16 +77,27 @@
 })();
 
 /* tooltip mod for brand logo */
-$(window).on('action:ajaxify.end', function () {
-    // Target the brand anchor component
-    const brandAnchor = $('[component="brand/anchor"]');
+(function () {
+  // Guard: this block uses jQuery directly; bail out safely if missing.
+  if (!window.jQuery) return;
+  var $ = window.jQuery;
 
-    if (brandAnchor.length) {
-        // Change the default title to "Home" on hover, and restore it when leaving
-        brandAnchor.on('mouseenter', function() {
-            $(this).attr('title', 'Home');
-        }).on('mouseleave', function() {
-            $(this).attr('title', 'Brand Logo');
-        });
-    }
-});
+  function bindBrandTooltip() {
+    var brandAnchor = $('[component="brand/anchor"]');
+    if (!brandAnchor.length) return;
+
+    // The header persists across ajaxify navigations, so unbind our
+    // namespaced handlers first — otherwise they stack on every page change.
+    brandAnchor
+      .off('mouseenter.nbBrandTip mouseleave.nbBrandTip')
+      .on('mouseenter.nbBrandTip', function () {
+        $(this).attr('title', 'Home');
+      })
+      .on('mouseleave.nbBrandTip', function () {
+        $(this).attr('title', 'Brand Logo');
+      });
+  }
+
+  bindBrandTooltip();
+  $(window).on('action:ajaxify.end', bindBrandTooltip);
+})();
