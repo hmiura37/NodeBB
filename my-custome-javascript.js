@@ -3,11 +3,27 @@ function applyLogoHoverEffect() {
   const logoImg = document.querySelector('[component="brand/logo"]');
   if (!logoImg) return;
 
-  const originalSrc = logoImg.getAttribute("src");
   const homeSrc = "/assets/uploads/system/home2.png";
   const brandAnchor =
     logoImg.closest('[component="brand/anchor"]') || logoImg.parentElement;
-  const originalTitle = brandAnchor.getAttribute("title") || "ブランドロゴ";
+
+  // Capture the originals ONCE. The header persists across ajaxify
+  // navigations, so if we re-read src here after a hover+click, we'd
+  // capture home2.png as the "original" and the real logo is lost.
+  if (!logoImg.dataset.origSrc) {
+    logoImg.dataset.origSrc = logoImg.getAttribute("src");
+    brandAnchor.dataset.origTitle =
+      brandAnchor.getAttribute("title") || "ブランドロゴ";
+  }
+  const originalSrc = logoImg.dataset.origSrc;
+  const originalTitle = brandAnchor.dataset.origTitle;
+
+  // Reset to the original on every page change. This covers the case
+  // where the user clicks the logo while hovering: mouseleave never
+  // fires, so the home icon would otherwise stay stuck on screen.
+  logoImg.setAttribute("src", originalSrc);
+  brandAnchor.setAttribute("title", originalTitle);
+  brandAnchor.setAttribute("data-bs-original-title", originalTitle);
 
   brandAnchor.onmouseenter = function () {
     logoImg.setAttribute("src", homeSrc);
