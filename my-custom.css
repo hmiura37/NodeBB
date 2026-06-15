@@ -37,8 +37,8 @@
   border-radius: 50%;
 }
 .yume-about-btn img {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: block;
   transition:
@@ -77,9 +77,9 @@
   text-align: center;
 }
 .yume-about-portrait {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
+  width: 76px;
+  height: 76px;
+  border-radius: 10%;
   margin-bottom: 1rem;
   box-shadow: 0 0 24px rgba(180, 160, 120, 0.35);
 }
@@ -178,11 +178,6 @@
 
 .rss-link .fa-rss {
   font-size: 0.9rem;
-}
-
-.company-name {
-  font-weight: 500;
-  color: #4a5568;
 }
 
 /* Responsive adjustements */

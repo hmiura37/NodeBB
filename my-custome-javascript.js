@@ -61,6 +61,16 @@ function initAboutDialog() {
   });
 }
 
+// Helper: attach a tooltip the NodeBB/jQuery way, falling back to native title
+function attachTooltip(el, text, placement) {
+  if (!el) return;
+  el.setAttribute("title", text);
+  // Try jQuery tooltip (NodeBB's built-in mechanism)
+  if (typeof $ !== "undefined" && $.fn.tooltip) {
+    $(el).tooltip({ placement: placement || "bottom", trigger: "hover" });
+  }
+}
+
 // 3. Google site-search icon in the logged-in menu
 function addGoogleSearchIcon() {
   var menu = document.getElementById("logged-in-menu");
@@ -71,7 +81,7 @@ function addGoogleSearchIcon() {
   li.className = "nav-item mx-2";
   li.setAttribute("role", "menuitem");
   li.innerHTML =
-    '<a href="#" id="google-search-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="Google Search"><span class="position-relative"><i class="fa fa-fw fa-magnifying-glass"></i></span><span class="nav-text small visible-open fw-semibold">Search</span></a>';
+    '<a href="#" id="google-search-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="Search"><span class="position-relative"><i class="fa fa-fw fa-magnifying-glass"></i></span><span class="nav-text small visible-open fw-semibold">Search</span></a>';
 
   var notifItem = menu.querySelector('li[component="notifications"]');
   if (notifItem) {
@@ -79,6 +89,12 @@ function addGoogleSearchIcon() {
   } else {
     menu.appendChild(li);
   }
+
+  attachTooltip(
+    document.getElementById("google-search-trigger"),
+    "Search",
+    "bottom"
+  );
 
   document
     .getElementById("google-search-trigger")
@@ -96,10 +112,50 @@ function addGoogleSearchIcon() {
     });
 }
 
-// 4. ONE binding — NodeBB fires action:ajaxify.end on initial load
-//    and on every page change, so all three run when needed.
+// 4. X/Twitter live-search icon, placed right after the Google search icon
+function addTwitterIcon() {
+  var menu = document.getElementById("logged-in-menu");
+  if (!menu || document.getElementById("twitter-search-li")) return;
+
+  var li = document.createElement("li");
+  li.id = "twitter-search-li";
+  li.className = "nav-item mx-2";
+  li.setAttribute("role", "menuitem");
+  li.innerHTML =
+    '<a href="#" id="twitter-search-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="夢 by X"><span class="position-relative"><i class="fa-brands fa-fw fa-x-twitter"></i></span><span class="nav-text small visible-open fw-semibold">X</span></a>';
+
+  // Insert right after the Google search item. addGoogleSearchIcon()
+  // must run before this function so #google-search-li already exists.
+  var googleItem = document.getElementById("google-search-li");
+  if (googleItem) {
+    googleItem.insertAdjacentElement("afterend", li);
+  } else {
+    menu.appendChild(li);
+  }
+
+  attachTooltip(
+    document.getElementById("twitter-search-trigger"),
+    "夢 by X",
+    "bottom"
+  );
+
+  document
+    .getElementById("twitter-search-trigger")
+    .addEventListener("click", function (e) {
+      e.preventDefault();
+      window.open(
+        "https://x.com/search?q=夢&src=typed_query&f=live",
+        "_blank",
+        "noopener"
+      );
+    });
+}
+
+// 5. ONE binding — NodeBB fires action:ajaxify.end on initial load
+//    and on every page change, so all four run when needed.
 $(window).on("action:ajaxify.end", function () {
   applyLogoHoverEffect();
   initAboutDialog();
   addGoogleSearchIcon();
+  addTwitterIcon(); // after Google so the insert-after anchor exists
 });
