@@ -1,3 +1,13 @@
+// Shared helper: attach a tooltip the NodeBB/jQuery way.
+// Defined at global scope so all IIFEs below can use it.
+function attachTooltip(el, text, placement) {
+  if (!el) return;
+  el.setAttribute('title', text);
+  if (window.jQuery && jQuery.fn.tooltip) {
+    jQuery(el).tooltip({ placement: placement || 'bottom', trigger: 'hover' });
+  }
+}
+
 (function() {
   function addGoogleSearchIcon() {
     var menu = document.getElementById('logged-in-menu');
@@ -15,6 +25,8 @@
     } else {
       menu.appendChild(li);
     }
+
+    attachTooltip(document.getElementById('google-search-trigger'), 'Search', 'bottom');
 
     document.getElementById('google-search-trigger').addEventListener('click', function(e) {
       e.preventDefault();
@@ -41,6 +53,58 @@
   // window.addEventListener will NOT catch it — bind via jQuery.
   if (window.jQuery) {
     jQuery(window).on('action:ajaxify.end', rebindSearchIcon);
+  }
+})();
+
+
+/* ──────────────────────────────────────────────────────────────
+ * X/Twitter live-search icon, right after the Google search icon.
+ * Always visible, on every page including /ai-chat.
+ * ────────────────────────────────────────────────────────────── */
+(function () {
+  function addTwitterIcon() {
+    var menu = document.getElementById('logged-in-menu');
+    if (!menu || document.getElementById('twitter-search-li')) return;
+
+    var li = document.createElement('li');
+    li.id = 'twitter-search-li';
+    li.className = 'nav-item mx-2';
+    li.setAttribute('role', 'menuitem');
+    li.innerHTML = '<a href="#" id="twitter-search-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="X (Twitter) で「認知症」を検索"><span class="position-relative"><i class="fa-brands fa-fw fa-x-twitter"></i></span><span class="nav-text small visible-open fw-semibold">X</span></a>';
+
+    // Insert right after the Google search item when it exists;
+    // otherwise fall back to the end of the menu.
+    var googleItem = document.getElementById('google-search-li');
+    if (googleItem) {
+      googleItem.insertAdjacentElement('afterend', li);
+    } else {
+      menu.appendChild(li);
+    }
+
+    attachTooltip(document.getElementById('twitter-search-trigger'), '認知症 by X', 'bottom');
+
+    document.getElementById('twitter-search-trigger').addEventListener('click', function (e) {
+      e.preventDefault();
+      window.open('https://x.com/search?q=認知症&src=typed_query&f=live', '_blank', 'noopener');
+    });
+  }
+
+  // Remove first, then re-add on every page change so the icon
+  // always sits right after the freshly rebuilt Google icon.
+  function rebindTwitterIcon() {
+    var existing = document.getElementById('twitter-search-li');
+    if (existing) existing.remove();
+    addTwitterIcon();
+  }
+
+  // Initial-load safety net: fires just after the Google icon's 1000ms
+  // net so #google-search-li already exists as the insertion anchor.
+  setTimeout(addTwitterIcon, 1100);
+
+  if (window.jQuery) {
+    // Bound after the Google block's handler, so on each ajaxify.end the
+    // Google icon is rebuilt first and ours lands right behind it.
+    jQuery(window).on('action:ajaxify.end', rebindTwitterIcon);
   }
 })();
 
