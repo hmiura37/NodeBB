@@ -70,7 +70,7 @@ function attachTooltip(el, text, placement) {
     li.id = 'twitter-search-li';
     li.className = 'nav-item mx-2';
     li.setAttribute('role', 'menuitem');
-    li.innerHTML = '<a href="#" id="twitter-search-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="X (Twitter) で「認知症」を検索"><span class="position-relative"><i class="fa-brands fa-fw fa-x-twitter"></i></span><span class="nav-text small visible-open fw-semibold">X</span></a>';
+    li.innerHTML = '<a href="#" id="twitter-search-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="認知症：フィード"><span class="position-relative"><i class="fa-brands fa-fw fa-x-twitter"></i></span><span class="nav-text small visible-open fw-semibold">X</span></a>';
 
     // Insert right after the Google search item when it exists;
     // otherwise fall back to the end of the menu.
@@ -81,7 +81,7 @@ function attachTooltip(el, text, placement) {
       menu.appendChild(li);
     }
 
-    attachTooltip(document.getElementById('twitter-search-trigger'), '認知症 by X', 'bottom');
+    attachTooltip(document.getElementById('twitter-search-trigger'), '認知症：フィード', 'bottom');
 
     document.getElementById('twitter-search-trigger').addEventListener('click', function (e) {
       e.preventDefault();
@@ -164,4 +164,183 @@ function attachTooltip(el, text, placement) {
 
   bindBrandTooltip();
   $(window).on('action:ajaxify.end', bindBrandTooltip);
+})();
+
+
+/* ──────────────────────────────────────────────────────────────
+ * Newsletter (email delivery) on/off icon, right after the X icon.
+ * Clicking opens a dialog explaining the WEEKLY dementia-news digest
+ * and lets the user toggle their subscription on/off.
+ *
+ * Uses the same /api/ai-chat/newsletter endpoints the old in-page
+ * toggle used (GET = read status, POST { subscribed } = update).
+ * The in-page toggle on /ai-chat has been removed in favour of this.
+ * ────────────────────────────────────────────────────────────── */
+(function () {
+  var DIALOG_ID = 'nb-newsletter-dialog';
+  var DESC_TEXT = '認知症の最新ニュースを購読したい場合は、配信設定をONにしてください。最新ニュースは毎週配信されます。';
+
+  function csrfToken() {
+    return (window.config && window.config.csrf_token) ? window.config.csrf_token : '';
+  }
+
+  // ── Menu icon ──────────────────────────────────────────────
+  function addNewsletterIcon() {
+    var menu = document.getElementById('logged-in-menu');
+    if (!menu || document.getElementById('newsletter-li')) return;
+
+    var li = document.createElement('li');
+    li.id = 'newsletter-li';
+    li.className = 'nav-item mx-2';
+    li.setAttribute('role', 'menuitem');
+    li.innerHTML = '<a href="#" id="newsletter-trigger" role="button" class="nav-link d-flex gap-2 align-items-center" aria-label="メール配信"><span class="position-relative"><i class="fa fa-fw fa-envelope"></i></span><span class="nav-text small visible-open fw-semibold">メール</span></a>';
+
+    // Sit right after the X icon when present; otherwise after Google;
+    // otherwise fall back to the end of the menu.
+    var twitterItem = document.getElementById('twitter-search-li');
+    var googleItem  = document.getElementById('google-search-li');
+    if (twitterItem) {
+      twitterItem.insertAdjacentElement('afterend', li);
+    } else if (googleItem) {
+      googleItem.insertAdjacentElement('afterend', li);
+    } else {
+      menu.appendChild(li);
+    }
+
+    // Tooltip — same NodeBB/jQuery helper the other icons use.
+    attachTooltip(document.getElementById('newsletter-trigger'), 'メール配信', 'bottom');
+
+    document.getElementById('newsletter-trigger').addEventListener('click', function (e) {
+      e.preventDefault();
+      openNewsletterDialog();
+    });
+  }
+
+  // Remove first, then re-add on every page change so the icon always
+  // lands right after the freshly rebuilt X icon.
+  function rebindNewsletterIcon() {
+    var existing = document.getElementById('newsletter-li');
+    if (existing) existing.remove();
+    addNewsletterIcon();
+  }
+
+  // ── Dialog ─────────────────────────────────────────────────
+  function onEscKey(e) {
+    if (e.key === 'Escape') closeNewsletterDialog();
+  }
+
+  function closeNewsletterDialog() {
+    var d = document.getElementById(DIALOG_ID);
+    if (d) d.remove();
+    document.removeEventListener('keydown', onEscKey);
+  }
+
+  function openNewsletterDialog() {
+    if (document.getElementById(DIALOG_ID)) return; // already open
+
+    var overlay = document.createElement('div');
+    overlay.id = DIALOG_ID;
+    overlay.className = 'nb-nl-overlay';
+    overlay.innerHTML =
+      '<div class="nb-nl-modal" role="dialog" aria-modal="true" aria-labelledby="nb-nl-title">' +
+        '<button type="button" class="nb-nl-close" aria-label="閉じる">&times;</button>' +
+        '<div class="nb-nl-head">' +
+          '<i class="fa fa-envelope nb-nl-head-icon" aria-hidden="true"></i>' +
+          '<h3 id="nb-nl-title" class="nb-nl-title">メール配信設定</h3>' +
+        '</div>' +
+        '<p class="nb-nl-desc"></p>' +
+        '<div class="nb-nl-row">' +
+          '<span class="nb-nl-row-label">ニュース配信</span>' +
+          '<label class="nb-nl-switch">' +
+            '<input type="checkbox" id="nb-nl-toggle">' +
+            '<span class="nb-nl-slider"></span>' +
+          '</label>' +
+          '<span class="nb-nl-state" id="nb-nl-state">…</span>' +
+        '</div>' +
+        '<div class="nb-nl-msg" id="nb-nl-msg" role="status"></div>' +
+      '</div>';
+
+    // Set description via textContent to avoid any HTML injection concerns.
+    overlay.querySelector('.nb-nl-desc').textContent = DESC_TEXT;
+
+    document.body.appendChild(overlay);
+
+    var toggle     = overlay.querySelector('#nb-nl-toggle');
+    var stateLabel = overlay.querySelector('#nb-nl-state');
+    var msg        = overlay.querySelector('#nb-nl-msg');
+
+    function setState(on) {
+      stateLabel.textContent = on ? 'ON' : 'OFF';
+      stateLabel.classList.toggle('is-on', !!on);
+    }
+
+    // Close handlers: × button, backdrop click, Esc key.
+    overlay.querySelector('.nb-nl-close').addEventListener('click', closeNewsletterDialog);
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeNewsletterDialog();
+    });
+    document.addEventListener('keydown', onEscKey);
+
+    // Load current subscription status.
+    toggle.disabled = true;
+    fetch('/api/ai-chat/newsletter', {
+      headers: { 'x-csrf-token': csrfToken() }
+    }).then(function (r) {
+      if (r.status === 403) {
+        msg.textContent = 'ログインが必要です。';
+        msg.className = 'nb-nl-msg is-error';
+        setState(false);
+        return null;
+      }
+      if (!r.ok) throw new Error('status ' + r.status);
+      return r.json();
+    }).then(function (d) {
+      if (!d) return;
+      toggle.checked = !!d.subscribed;
+      setState(toggle.checked);
+      toggle.disabled = false;
+    }).catch(function () {
+      msg.textContent = '状態を取得できませんでした。';
+      msg.className = 'nb-nl-msg is-error';
+      setState(false);
+    });
+
+    // Toggle change → persist via POST, revert on failure.
+    toggle.addEventListener('change', function () {
+      var subscribed = toggle.checked;
+      toggle.disabled = true;
+      msg.textContent = '';
+      msg.className = 'nb-nl-msg';
+      fetch('/api/ai-chat/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken()
+        },
+        body: JSON.stringify({ subscribed: subscribed })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('status ' + r.status);
+        setState(subscribed);
+        msg.textContent = subscribed ? '配信をONにしました ✓' : '配信をOFFにしました';
+        msg.className = 'nb-nl-msg is-ok';
+        toggle.disabled = false;
+      }).catch(function () {
+        toggle.checked = !subscribed; // revert
+        setState(toggle.checked);
+        msg.textContent = '更新に失敗しました。もう一度お試しください。';
+        msg.className = 'nb-nl-msg is-error';
+        toggle.disabled = false;
+      });
+    });
+  }
+
+  // Initial-load safety net: fires just after the Google (1000ms) and
+  // X (1100ms) nets, so #twitter-search-li already exists as the anchor.
+  setTimeout(addNewsletterIcon, 1200);
+
+  if (window.jQuery) {
+    // Bound after the Google and X blocks' handlers, so on each
+    // ajaxify.end those icons are rebuilt first and ours lands behind them.
+    jQuery(window).on('action:ajaxify.end', rebindNewsletterIcon);
+  }
 })();

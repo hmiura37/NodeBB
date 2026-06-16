@@ -31,7 +31,6 @@
           <li>AI モデル、好みで選択できます</li>
           <li>応答内容、最大 800 トークン</li>
           <li>🔄前回の会話を復元、🗑️クリア</li>
-          <li>𝕏 認知症フィードを別タブで表示</li>
         </ul>
       </div>
 
@@ -63,7 +62,7 @@
         </svg>
       </button>
 
-      <button type="submit" class="nb-ai-send-btn">
+            <button type="submit" class="nb-ai-send-btn">
         <span class="nb-ai-send-text">Send</span>
         <span class="nb-ai-send-icon">➜</span>
       </button>
@@ -83,24 +82,25 @@
   }
 
   /**
-   * Sequential Multi-line Typewriter Engine
+   * Sequential Multi-line Typewriter Engine (Updated for 3 lines)
    */
   function runTypewriterEffect() {
     const el1 = document.getElementById('typewriter-msg1');
     const el2 = document.getElementById('typewriter-msg2');
-    
+
+    // 必須要素の存在チェックと二重実行防止
     if (!el1 || !el2 || el1.dataset.typingStarted === '1') return;
     el1.dataset.typingStarted = '1';
 
     const text1 = el1.dataset.text || '';
     const text2 = el2.dataset.text || '';
-    
+
     el1.textContent = '';
     el2.textContent = '';
-    
+
     let index1 = 0;
     let index2 = 0;
-    const speed = 45; // Typing speed per character (ms)
+    const speed = 45; // タイピング速度 (ms)
 
     function typeLine1() {
       if (index1 < text1.length) {
@@ -108,7 +108,7 @@
         index1++;
         setTimeout(typeLine1, speed);
       } else {
-        setTimeout(typeLine2, 200); // Small natural pause before line 2 starts
+        setTimeout(typeLine2, 200); // 2行目開始前の短いポーズ
       }
     }
 
@@ -221,19 +221,13 @@
     const infoBtn   = document.querySelector('#nb-ai-info-btn');
     const infoPop   = document.querySelector('#nb-ai-info-popover');
 
-    // v2 keys: history is now stored as PLAIN TEXT and re-rendered on
-    // restore, never as raw HTML injected back into the DOM. This prevents
-    // localStorage from becoming a persistent XSS vector.
     const STORAGE_KEY  = 'nb-ai-chat-history-v2';
     const MODEL_KEY    = 'nb-ai-model-selection';
     const MESSAGES_KEY = 'nb-ai-chat-messages';
 
-    // Conversation history for multi-turn API calls
     var chatMessages = [];
-    // Display history: [{ role: 'user'|'bot', text: '...', sources: [...] }]
     var displayEntries = [];
 
-    // Model select — declared BEFORE any function that references it.
     const modelSelect = document.querySelector('#nb-ai-model-select');
 
     try {
@@ -304,7 +298,6 @@
       });
       displayEntries.forEach(appendEntryBubble);
 
-      // Restore conversation messages for multi-turn API calls
       try {
         var saved = JSON.parse(localStorage.getItem(MESSAGES_KEY));
         if (Array.isArray(saved)) chatMessages = saved;
@@ -320,17 +313,13 @@
       displayEntries = [];
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
       try { localStorage.removeItem(MESSAGES_KEY); } catch (e) {}
-      // Intentionally KEEP the model selection (MODEL_KEY): clearing the
-      // conversation should not reset the user's preferred model.
     }
 
-    // Wire up restore / clear buttons
     const restoreBtn = document.querySelector('#nb-ai-restore-btn');
     const clearBtn   = document.querySelector('#nb-ai-clear-btn');
 
     restoreBtn.addEventListener('click', function () {
       if (!restoreChatLog()) {
-        // No history found — show a brief notice
         const notice = document.createElement('div');
         notice.className = 'nb-ai-message nb-ai-message-bot';
         notice.innerHTML = '<div class="nb-ai-reply" style="color:#888;font-size:13px;">復元できる会話がありません。</div>';
@@ -397,7 +386,6 @@
       charCount.textContent = '0 / 2000';
       charCount.classList.remove('nb-ai-char-over');
 
-      // Add to conversation history
       chatMessages.push({ role: 'user', content: message });
 
       try {
@@ -407,8 +395,6 @@
             'Content-Type': 'application/json',
             'x-csrf-token': window.config && window.config.csrf_token ? window.config.csrf_token : ''
           },
-          // username/uid are no longer sent: the server resolves identity
-          // from the authenticated session and ignores client claims.
           body: JSON.stringify({
             message: message,
             messages: chatMessages,
@@ -429,19 +415,16 @@
         const replyText = data.reply || 'AI chat backend is not ready yet.';
         const sources = Array.isArray(data.sources) ? data.sources : [];
 
-        // Add assistant reply to conversation history
         chatMessages.push({ role: 'assistant', content: replyText });
 
         botBubble.innerHTML = buildBotBubbleHtml(replyText, sources);
 
-        // Record plain-text entries for persistence (re-rendered on restore)
         displayEntries.push({ role: 'user', text: message });
         displayEntries.push({ role: 'bot', text: replyText, sources: sources });
         saveChatLog();
 
       } catch (err) {
         botBubble.innerHTML = '<div class="nb-ai-reply nb-ai-reply-error">送信に失敗しました: ' + escapeHtml(err.message) + '</div>';
-        // Remove the failed user message from conversation history
         chatMessages.pop();
         saveChatLog();
       } finally {
@@ -451,6 +434,7 @@
         textarea.focus();
       }
     });
+
   }
 
   initAiChatPage();
