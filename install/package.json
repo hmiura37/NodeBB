@@ -2,7 +2,7 @@
     "name": "nodebb",
     "license": "GPL-3.0",
     "description": "NodeBB Forum",
-    "version": "4.14.4",
+    "version": "4.14.5",
     "homepage": "https://www.nodebb.org",
     "repository": {
         "type": "git",
@@ -101,7 +101,7 @@
         "mousetrap": "1.6.5",
         "multer": "2.2.0",
         "nconf": "0.13.0",
-        "nodebb-plugin-2factor": "8.0.1",
+        "nodebb-plugin-2factor": "8.0.5",
         "nodebb-plugin-composer-default": "11.0.8",
         "nodebb-plugin-dbsearch": "7.0.0",
         "nodebb-plugin-emoji": "6.0.14",
