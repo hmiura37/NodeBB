@@ -98,9 +98,9 @@ function apiRoutes(router, name, middleware, controllers) {
 
 	const middlewares = [
 		upload.array('files[]', 20),
-		middleware.validateFiles,
 		middleware.applyCSRF,
 		middleware.ensureLoggedIn,
+		middleware.validateFiles,
 	];
 
 	router.post(`/api/${name}/category/uploadpicture`, middlewares, helpers.tryRoute(controllers.admin.uploads.uploadCategoryPicture));

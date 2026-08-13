@@ -37,6 +37,8 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 		clamp,
 		quote,
 		concat,
+		txDisplayname,
+		txUsername,
 		generateWroteReplied,
 		generateRepliedTo,
 		generateWrote,
@@ -54,9 +56,7 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 	function escape(str) {
 		// decoding HTML entities before escaping to prevent double escaping
 		// and allow translators to use HTML entities in translations
-		return tx.escape(
-			utils.escapeHTML(utils.decodeHTMLEntities(str))
-		);
+		return utils.escapeHTML(utils.decodeHTMLEntities(str));
 	}
 
 	function _tx(token, ...args) {
@@ -74,8 +74,9 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 			args = argsFromToken;
 		}
 		const [namespace, key] = txToken.split(':', 2);
-		if (!namespace || !key || !this?._i18n?.[namespace]?.[key]) {
-			return tx.escape(tx.fixDoubleEscaped(tx.escapeHTML(token)));
+		const translation = tx.resolveKey(this?._i18n?.[namespace], key);
+		if (!namespace || !key || !translation) {
+			return tx.fixDoubleEscaped(tx.escapeHTML(token));
 		}
 
 		const escapedArgs = args.map((arg) => {
@@ -87,18 +88,16 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 			return escapedArg;
 		});
 
-		const translation = this._i18n[namespace][key];
-		const result = tx.replaceArguments(translation, escapedArgs);
-		// prevents the translator.translate() in
-		// app.parseAndTraslate and page render from translating again
-		// can be removed once whole page translation is removed
-		return tx.escape(result);
+		return tx.replaceArguments(translation, escapedArgs);
 	}
 
 	function buildMetaTag(tag) {
 		const name = tag.name ? `name="${escape(tag.name)}" ` : '';
 		const property = tag.property ? `property="${escape(tag.property)}" ` : '';
-		const content = tag.content ? `content="${escape(tag.content).replace(/\n/g, ' ')}" ` : '';
+		const tagContent = tag.content ?
+			tag.translate ? _tx.call(this, tag.content) : tag.content.replace(/\n/g, ' ') :
+			'';
+		const content = tagContent ? `content="${escape(tagContent)}" ` : '';
 
 		return '<meta ' + name + property + content + '/>\n\t';
 	}
@@ -165,8 +164,8 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 		return true;
 	}
 
-	function stripTags(str) {
-		return utils.stripHTMLTags(str);
+	function stripTags(str, ...args) {
+		return utils.stripHTMLTags(str, [...args]);
 	}
 
 	function buildCategoryIcon(category, size, rounded) {
@@ -281,7 +280,7 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 			const guestDisabled = ['groups:moderate', 'groups:posts:upvote', 'groups:posts:downvote', 'groups:local:login', 'groups:group:create'];
 			const spidersEnabled = ['groups:find', 'groups:read', 'groups:topics:read', 'groups:view:users', 'groups:view:tags', 'groups:view:groups'];
 			const globalModDisabled = ['groups:moderate'];
-			let fediverseEnabled = ['groups:view:users', 'groups:find', 'groups:read', 'groups:topics:read', 'groups:topics:create', 'groups:topics:reply', 'groups:topics:tag', 'groups:posts:edit', 'groups:posts:history', 'groups:posts:delete', 'groups:posts:upvote', 'groups:posts:downvote', 'groups:topics:delete'];
+			let fediverseEnabled = ['groups:view:users', 'groups:find', 'groups:read', 'groups:topics:read', 'groups:topics:create', 'groups:topics:reply', 'groups:topics:tag', 'groups:posts:edit', 'groups:posts:history', 'groups:posts:delete', 'groups:posts:upvote', 'groups:posts:downvote', 'groups:topics:delete', 'groups:chat', 'groups:chat:privileged'];
 			if (cid === -1) {
 				fediverseEnabled = fediverseEnabled.slice(3);
 			}
@@ -389,7 +388,7 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 		}
 		classNames = escape(classNames || '');
 		component = escape(component || '');
-		const displayname = escape(String(userObj.displayname || ''));
+		const displayname = txDisplayname.call(this, userObj);
 		const picture = escape(String(userObj.picture || ''));
 		const iconBgColor = escape(String(userObj['icon:bgColor'] || ''));
 		const iconText = escape(String(userObj['icon:text'] || ''));
@@ -443,6 +442,20 @@ module.exports = function (utils, Benchpress, tx, relative_path) {
 
 	function concat(...args) {
 		return args.join('');
+	}
+
+	function txDisplayname(user) {
+		return txUsernameOrDisplayname.call(this, user, 'displayname');
+	}
+
+	function txUsername(user) {
+		return txUsernameOrDisplayname.call(this, user, 'username');
+	}
+
+	function txUsernameOrDisplayname(user, field) {
+		const name = String(user?.[field] || '');
+		const shouldTranslate = user?.uid === 0 && (name === '[[global:former-user]]' || name === '[[global:guest]]');
+		return shouldTranslate ? _tx.call(this, name) : escape(name);
 	}
 
 	function generateWroteReplied(post, timeagoCutoff) {

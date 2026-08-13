@@ -35,12 +35,6 @@ app.onDomReady = function () {
 	});
 };
 
-if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', ajaxify.parseData);
-} else {
-	ajaxify.parseData();
-}
-
 (function () {
 	let appLoaded = false;
 	const isTouchDevice = utils.isTouchDevice();
@@ -327,21 +321,13 @@ if (document.readyState === 'loading') {
 			blockName = undefined;
 		}
 
-		return new Promise((resolve, reject) => {
-			require(['translator', 'benchpress'], function (translator, Benchpress) {
-				Benchpress.render(template, data, blockName)
-					// TODO: remove once all tx tokens are migrated to tx("") helper
-					.then(rendered => translator.translate(rendered))
-					.then(translated => translator.unescape(translated))
-					.then(resolve, reject);
-			});
-		}).then((html) => {
+		return Benchpress.render(template, data, blockName).then((html) => {
 			try {
 				html = $(html);
 			} catch (err) {
 				// handle cases where the template parsed has multiple elements at the root level
 				// this breaks the jquery selector so we wrap it in a div
-				if (err.startsWith('Syntax error, unrecognized expression')) {
+				if (err.message.startsWith('Syntax error, unrecognized expression')) {
 					html = $(`<div>${html}</div>`);
 				} else {
 					throw err;
