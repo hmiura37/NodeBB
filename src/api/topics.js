@@ -175,7 +175,7 @@ topicsAPI.unfollow = async function (caller, data) {
 };
 
 topicsAPI.updateTags = async (caller, { tid, tags }) => {
-	if (!await privileges.topics.canEdit(tid, caller.uid)) {
+	if (!await privileges.topics.canTag(tid, caller.uid)) {
 		throw new Error('[[error:no-privileges]]');
 	}
 
@@ -186,7 +186,7 @@ topicsAPI.updateTags = async (caller, { tid, tags }) => {
 };
 
 topicsAPI.addTags = async (caller, { tid, tags }) => {
-	if (!await privileges.topics.canEdit(tid, caller.uid)) {
+	if (!await privileges.topics.canTag(tid, caller.uid)) {
 		throw new Error('[[error:no-privileges]]');
 	}
 
@@ -199,7 +199,7 @@ topicsAPI.addTags = async (caller, { tid, tags }) => {
 };
 
 topicsAPI.deleteTags = async (caller, { tid }) => {
-	if (!await privileges.topics.canEdit(tid, caller.uid)) {
+	if (!await privileges.topics.canTag(tid, caller.uid)) {
 		throw new Error('[[error:no-privileges]]');
 	}
 
@@ -320,7 +320,11 @@ topicsAPI.move = async (caller, { tid, cid }) => {
 			const isModOfSourceAndDestination = isModOfDestination && isModOfTopicCid[index];
 			if (!isAdmin && !isModOfSourceAndDestination) {
 				const isOwnerOfTopic = parseInt(topicData.uid, 10) === parseInt(caller.uid, 10);
-				if (!isOwnerOfTopic || !canCreateAndReadDestination || topicData.locked || topicData.deleted) {
+				const canReadSource = await privileges.topics.can('topics:read', tid, caller.uid);
+				if (
+					!isOwnerOfTopic || !canCreateAndReadDestination ||
+					!canReadSource || topicData.locked || topicData.deleted
+				) {
 					throw new Error('[[error:no-privileges]]');
 				}
 				if (maxOwnerPosts > 0 && topicData.postcount > maxOwnerPosts) {
